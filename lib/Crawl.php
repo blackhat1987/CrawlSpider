@@ -17,7 +17,7 @@
 */
 
 
-class Crawl
+class Crawl_Crawl
 {
 	/*配置文件*/
 	public $config = array();
@@ -59,18 +59,13 @@ class Crawl
 
 	public function crawl_page($prePage_url = '')
 	{
-		/*if($this->deep == 1) {
-			$this->generageUrl();
-		}*/
-
 		$dataList = array();
 		$this->prePage_url = $prePage_url;
 		$this->currPage_url = $this->config['url'] . $this->query_param;
-		$fake_user_agent = $this->getRandomUserAgent();
-		ini_set('user_agent', $fake_user_agent);
+	//	$html = file_get_contents($this->currPage_url, False, $this->getRandomStream());
+		$html = $this->get_html();
 	    $dom = new DOMDocument('1.0');
-	    $html = file_get_contents($this->currPage_url, false, $this->getRandomStream());
-	    @$dom->loadHTML($html);
+        @$dom->loadHTML($html['content']);
 	    $xpath = new DOMXPath($dom);
 
 	    error_log("######第" . $this->deep . "页########");
@@ -108,6 +103,29 @@ class Crawl
   		//file_put_contents('/tmp/' . $filename, json_encode($dataList), FILE_APPEND);
 	}
 
+
+	public function get_html()
+	{
+        $options = array(
+                CURLOPT_URL             => $this->currPage_url,
+                CURLOPT_HEADER          => false,
+                CURLOPT_FOLLOWLOCATION  => true,
+                CURLOPT_RETURNTRANSFER  => true,
+                CURLOPT_TIMEOUT         => 30,
+                //CURLOPT_PROXY           => '...proxy.ip...',
+                //CURLOPT_PROXYPORT       => '...proxy.port...',
+                //CURLOPT_USERAGENT       => $this->getRandomUserAgent(),
+                CURLOPT_USERAGENT       => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ru; rv:1.8.0.9) Gecko/20061206 Firefox/1.5.0.9',
+        );
+
+        $ch = curl_init();
+    	curl_setopt_array($ch, $options);
+    	$content = curl_exec($ch);
+    	$error = curl_error($ch);
+    	return array('code' => $error, 'content' => $content);
+    	//return (!$error && $html) ? $html : null;
+	}
+
 	/*
 	* 设置随机User-agent
 	*
@@ -134,9 +152,10 @@ class Crawl
 		$auth = base64_encode("User:ROOT");
 		$opt = array('http' => array(//'proxy' => 'tcp://'.$this->getProxyIp(),
 									 'request_fulluri' => true,
-									 'header' => "Proxy-Authorization:Basic $auth",
+									 //'header' => "Proxy-Authorization:Basic $auth",
 									 'header' => 'Accept-language:en\r\n'.
-									 			 'Cookie:test=test\r\n'));
+									 			 'Cookie:test=test\r\n'.
+                                                 'User-agent:'.$this->getRandomUserAgent().'\r\n'));
 
 		return stream_context_create($opt);									 			 
 	}
