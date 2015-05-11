@@ -46,7 +46,7 @@ class Crawl
 	public $errorMsg = null;
 
 	/*curl setopt*/
-	static $proxy = true;
+	static $proxy = false;
 
 	static $conn_num = 1;
 
@@ -157,8 +157,8 @@ class Crawl
         );
 
         if(static::$proxy) {
-        	//$proxy = array(CURLOPT_PROXY => '107.170.238.246',CURLOPT_PROXYPORT => 8080);
-        	//$options = $options + $proxy;
+        	$proxy = array(CURLOPT_PROXY => '107.170.238.246:82');
+        	$options = $options + $proxy;
         }
 
         $ch = curl_init();
