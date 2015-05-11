@@ -17,7 +17,7 @@
 */
 
 
-class Crawl
+class Crawl_Crawl
 {
 	/*配置文件*/
 	public $config = array();
@@ -26,7 +26,7 @@ class Crawl
 	public $appName = '';
 
 	/*页面深度*/
-	public $deep = 1;
+	static $deep = 1;
 
 	/*当前页面*/
 	public $currPage_url = '';
@@ -52,11 +52,15 @@ class Crawl
 
 	static $max_conn = 5;
 
+    public $dataList = array();
+
+    private $_key = 'tzj';
+
 	public function __construct($appName, $config)
 	{
 		$this->appName = $appName;
 		$this->config = $config[$appName];
-		$this->_query_item = count($config['get']);
+		#$this->_query_item = count($config['get']);
 
 	}
 
@@ -68,10 +72,16 @@ class Crawl
 
 		if(isset($this->config['get'])) {
 			foreach ($this->config['get'] as $key => $value) {
-				error_log("参数:" . json_encode($this->config['get']) . PHP_EOL);
 				$this->query_param = (!empty($value))? '?' . http_build_query($value):'';
-				$this->crawl_page();
-				$this->deep = 1;
+                $this->_key = $value['query'];
+				if($this->crawl_page()) {
+                    error_log("抓取完毕,重新初始化数据!".PHP_EOL);
+				    static::$deep = 1;
+                    $this->writeData();
+                    $this->dataList = array();
+                } else {
+                    echo "参数问题！";exit;
+                }
 			}
 		} else {
 			$this->crawl_page();
@@ -100,22 +110,25 @@ class Crawl
 	    if($elements->length == 0) {
 	    	//尝试走代理
 	    	if(self::$conn_num <= self::$max_conn) {
-	    		$this->reconnect();
+                self::$conn_num++;
+                static::$proxy = true;
+                $this->crawl_page($this->currPage_url);
+	//    		$this->reconnect();
 	    	} else {
-		    	$this->setError("抓取错误,请检查代理ip或配置文件");
+		    	print_r("抓取错误,请检查代理ip或配置文件");exit;
 	    		return false;
 	    	}
 
 	    }
-	    error_log("######第" . $this->deep . "页########");
+	    error_log("######[$this->_key]第" . static::$deep . "页########");
 
 	    foreach ($elements as $key => $element) {
 	    	error_log($element->textContent . PHP_EOL);
-	        $dataList[$key]['title'] = $element->textContent;
-	        $dataList[$key]['href'] = $element->getAttribute("href");
+	        $dataList[$this->_key][$key]['title'] = $element->textContent;
+	        $dataList[$this->_key][$key]['href'] = $element->getAttribute("href");
 	    }
 
-
+        $this->dataList = array_merge($this->dataList,$dataList);
 	    if(isset($this->config['sleep'])) {
 	    	sleep($this->config['sleep']);
 	    }
@@ -127,16 +140,28 @@ class Crawl
 
 	    if(!$this->checkIsEnd()) {
 			$this->query_param = str_replace($this->config['url'], '', $this->nextPage_url);
-	    	$this->deep++;
-	    	//$this->config['query_url'] = $this->config['url'] . $this->nextPage_url;
+	    	static::$deep++;
 	    	$this->crawl_page($this->currPage_url);
-	    } else {
-	    	echo "End" . PHP_EOL;
+            return true;
 	    }
-	    
-  		$filename = $this->appName . '-' . date('Ymd',time()) . '.json';
-  		//file_put_contents('/tmp/' . $filename, json_encode($dataList), FILE_APPEND);
+        error_log("第一个关键词抓取完毕!");
+	    return;
 	}
+
+    /*写数据*/
+    private function writeData()
+    {
+        $path = "/tmp/" . $this->appName . "-" . date('Ymd',time()) . '.json';
+        $data_file = file_get_contents($path);
+        $content = $this->dataList;
+        if($data_file) {
+            $content =  json_decode($data_file, true);
+            $content = array_merge($content,$this->dataList);
+            print_r($content);
+        }
+        file_put_contents($path, json_encode($content));
+    }
+
 
 	private function reconnect()
 	{
@@ -156,7 +181,7 @@ class Crawl
                 CURLOPT_USERAGENT       => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ru; rv:1.8.0.9) Gecko/20061206 Firefox/1.5.0.9',
         );
 
-        if(static::$proxy) {
+        if(1||static::$proxy) {
         	$proxy = array(CURLOPT_PROXY => '107.170.238.246:82');
         	$options = $options + $proxy;
         }
@@ -229,7 +254,7 @@ class Crawl
 	*/
 	public function checkIsEnd()
 	{
-		if($this->deep > 2) {
+		if(static::$deep > 1) {
 			error_log("到达最大页数".PHP_EOL);
 			return true;
 		}
