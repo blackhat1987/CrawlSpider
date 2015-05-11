@@ -3,28 +3,31 @@
 
     return
 
-    [
+    array(
      'weixin' =>
-    	[
+    	array(
     	 'url'   => 'http://weixin.sogou.com/weixin',
-    	 'get'   => ['type' => 2, 'query' => '网贷','sourceid' => 'inttime_day','tsn' => 1],
+    	 'get'   => array(
+    	 				array('type' => 2, 'query' => '网贷','sourceid' => 'inttime_day','tsn' => 1),
+    	 				array('type' => 2, 'query' => '网贷','sourceid' => 'inttime_day','tsn' => 1),
+    				),
     	 'sleep' => 2,
     	 'depth' => 1,
-    	 'xpath' => ['main' => '//div[@class="results"]/div[@class="wx-rb wx-rb3"]/div[@class="txt-box"]/h4/a',
-    	 			 'next' => '//div[@id="pagebar_container"]/a[@id="sogou_next"]'],
-	  	],
+    	 'xpath' => array('main' => '//divarray(@class="results")/divarray(@class="wx-rb wx-rb3")/divarray(@class="txt-box")/h4/a',
+    	 			 	  'next' => '//divarray(@id="pagebar_container")/aarray(@id="sogou_next")'),
+	  	),
 
 	 'touzhijia' =>
-	 	[
+	 	array(
 	 	  'url'  => 'http://www.touzhijia.com/project',
-	 	  'xpath'=> ['main' => '//tbody/tr/td[@class="td2"]/p[1]',
-	 	  			 'next' => '//div[@class="manu"]/a'],
-	 	],
+	 	  'xpath'=> array('main' => '//tbody/tr/tdarray(@class="td2")/parray(1)',
+	 	  			 	  'next' => '//divarray(@class="manu")/a'),
+	 	),
 
 	 'wenda' =>
-	 	[
-	 	  'url'  => 'http://dev.touzhijia.net/wenda/',
-	 	  'xpath'=> ['main' => '//tbody/tr/td/a',
-	 	  			 'next' => '//div[@class="manu"]/a[last()]'],
-	 	]
-	];
+	 	array(
+	 	  'url'  => 'http://www.touzhijia.com/wenda/',
+	 	  'xpath'=> array('main' => '//tbody/tr/td/a',
+	 	  			 	  'next' => '//div[@class="manu"]/a[last()]'),
+	 	)
+	);

@@ -11,7 +11,7 @@ class Proxy
 
 	public function test()
 	{
-		for ($i=0; $i < count($this->file) - 1; $i++) { 
+		for ($i=0; $i < count($this->file) - 1; $i++) {
 			$splited = explode(':', $this->file[$i]);
 			if($con = @fsockopen($splited[0], $splited[1], $eroare, $eroare_str, 3)) {
 				file_put_contents('true_proxy_ip.txt', $this->file[$i], FILE_APPEND);

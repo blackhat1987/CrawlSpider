@@ -12,6 +12,6 @@ class DefaultController
     	$str = 'wenda';
         $config = include APP_PATH . '/config/config.php';
         $crawl = new Crawl($str, $config);
-		$crawl->crawl_page($config['url'], $config['depth']);
+		$crawl->crawl();
 	}
 }

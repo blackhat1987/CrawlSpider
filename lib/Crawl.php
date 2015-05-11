@@ -17,7 +17,7 @@
 */
 
 
-class Crawl_Crawl
+class Crawl
 {
 	/*配置文件*/
 	public $config = array();
@@ -40,20 +40,28 @@ class Crawl_Crawl
 	/*URi 参数*/
 	public $query_param = '';
 
+	/*查询几组参数*/
+	private $_query_item = 0;
+
+	public $errorMsg = null;
+
 	public function __construct($appName, $config)
 	{
 		$this->appName = $appName;
 		$this->config = $config[$appName];
-		$this->query_param = (isset($this->config['get']))? '?' . http_build_query($this->config['get']):'';
+		$this->_query_item = count($config['get']);
+
 	}
 
-
-	public function generageUrl()
+	public function crawl()
 	{
 		if(isset($this->config['get'])) {
-			$this->config['query_url'] = $this->config['url'] . '?' . http_build_query($this->config['get']);
+			foreach ($this->config['get'] as $key => $value) {
+				$this->query_param = (isset($this->value['get']))? '?' . http_build_query($this->value['get']):'';
+				$this->crawl_page();
+			}
 		} else {
-			$this->config['query_url'] = $this->config['url'];
+			$this->crawl_page();
 		}
 	}
 
@@ -62,10 +70,12 @@ class Crawl_Crawl
 		$dataList = array();
 		$this->prePage_url = $prePage_url;
 		$this->currPage_url = $this->config['url'] . $this->query_param;
-	//	$html = file_get_contents($this->currPage_url, False, $this->getRandomStream());
 		$html = $this->get_html();
+		if($this->hasError()) {
+			die($this->getError());
+		}
 	    $dom = new DOMDocument('1.0');
-        @$dom->loadHTML($html['content']);
+        @$dom->loadHTML($html);
 	    $xpath = new DOMXPath($dom);
 
 	    error_log("######第" . $this->deep . "页########");
@@ -98,7 +108,6 @@ class Crawl_Crawl
 	    	exit;
 	    }
 	    
-	    date_default_timezone_set("Asia/Shanghai");
   		$filename = $this->appName . '-' . date('Ymd',time()) . '.json';
   		//file_put_contents('/tmp/' . $filename, json_encode($dataList), FILE_APPEND);
 	}
@@ -121,8 +130,11 @@ class Crawl_Crawl
         $ch = curl_init();
     	curl_setopt_array($ch, $options);
     	$content = curl_exec($ch);
-    	$error = curl_error($ch);
-    	return array('code' => $error, 'content' => $content);
+    	if(curl_errno($ch) != 0) {
+    		$this->setError(curl_error($ch));
+    	}
+
+    	return $content;
     	//return (!$error && $html) ? $html : null;
 	}
 
@@ -160,6 +172,21 @@ class Crawl_Crawl
 		return stream_context_create($opt);									 			 
 	}
 
+	public function hasError()
+	{
+		return !empty($this->errorMsg);
+	}
+
+	public function setError($msg)
+	{
+		$this->errorMsg = $msg;
+	}
+
+	public function getError()
+	{
+		$nowTime = date("Y-m-d H:i:s", time());
+		return '['.$nowTime.'] ' . $this->errorMsg;
+	}
 	/*
 	* 检查是否是最后一页
 	*

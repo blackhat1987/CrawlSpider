@@ -5,6 +5,9 @@ defined("APP_MODE") or define("APP_MODE", 'HTTP');
 
 defined('DEFAULT_CONTROLLER') or define('DEFAULT_CONTROLLER', 'Default');
 defined('DEFAULT_METHOD') or define('DEFAULT_METHOD' , 'Index');
+date_default_timezone_set("Asia/Shanghai");
+
+
 
 require(__DIR__ . '/vendor/autoload.php');
 //require(__DIR__ . '/config/routes.php');
