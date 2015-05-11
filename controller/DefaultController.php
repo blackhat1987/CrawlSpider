@@ -9,9 +9,13 @@ class DefaultController
 {
 	public function actionIndex()
     {
-    	$str = 'wenda';
+    	$str = 'weixin';
         $config = include APP_PATH . '/config/config.php';
         $crawl = new Crawl($str, $config);
-		$crawl->crawl();
+		$ret = $crawl->crawl();
+		if(!$ret) {
+			echo $crawl->getError();
+		}
+
 	}
 }

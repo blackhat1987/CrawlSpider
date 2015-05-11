@@ -9,12 +9,12 @@
     	 'url'   => 'http://weixin.sogou.com/weixin',
     	 'get'   => array(
     	 				array('type' => 2, 'query' => '网贷','sourceid' => 'inttime_day','tsn' => 1),
-    	 				array('type' => 2, 'query' => '网贷','sourceid' => 'inttime_day','tsn' => 1),
+    	 				array('type' => 2, 'query' => '投之家','sourceid' => 'inttime_day','tsn' => 1),
     				),
     	 'sleep' => 2,
     	 'depth' => 1,
-    	 'xpath' => array('main' => '//divarray(@class="results")/divarray(@class="wx-rb wx-rb3")/divarray(@class="txt-box")/h4/a',
-    	 			 	  'next' => '//divarray(@id="pagebar_container")/aarray(@id="sogou_next")'),
+    	 'xpath' => array('main' => '//div[@class="results"]/div[@class="wx-rb wx-rb3"]/div[@class="txt-box"]/h4/a',
+    	 			 	  'next' => '//div[@id="pagebar_container"]/a[@id="sogou_next"]'),
 	  	),
 
 	 'touzhijia' =>
