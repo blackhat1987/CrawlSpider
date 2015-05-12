@@ -15,9 +15,8 @@
 *                                                                 
 *
 */
-
-
-class Crawl
+set_time_limit(0);
+class Crawl_Crawl
 {
 	/*配置文件*/
 	public $config = array();
@@ -47,7 +46,7 @@ class Crawl
 
 	/*curl setopt*/
 	static $proxy = false;
-
+    public $proxyIP = '';
 	static $conn_num = 1;
 
 	static $max_conn = 5;
@@ -60,8 +59,6 @@ class Crawl
 	{
 		$this->appName = $appName;
 		$this->config = $config[$appName];
-		#$this->_query_item = count($config['get']);
-
 	}
 
 	public function crawl()
@@ -107,17 +104,15 @@ class Crawl
 
 	    /*爬取当前页内容*/
 	    $elements = $xpath->query($this->config['xpath']['main']);
+        /*这里有个bug,抓取内容为空时候回去找代理*/
 	    if($elements->length == 0) {
 	    	//尝试走代理
 	    	error_log("窝走代理了");
 	    	if(self::$conn_num <= self::$max_conn) {
-                self::$conn_num++;
-                static::$proxy = true;
-                $this->crawl_page($this->currPage_url);
-	//    		$this->reconnect();
+	    		$this->reconnect();
 	    	} else {
-		    	print_r("抓取错误,请检查代理ip或配置文件");exit;
-	    		return false;
+		    	error_log("抓取错误,请检查代理ip或配置文件".$this->proxyIP);
+                exit;
 	    	}
 
 	    }
@@ -125,8 +120,10 @@ class Crawl
 
 	    foreach ($elements as $key => $element) {
 	    	#error_log($element->textContent . PHP_EOL);
-	        $dataList[$this->_key][$key]['title'] = $element->textContent;
-	        $dataList[$this->_key][$key]['href'] = $element->getAttribute("href");
+            $dataList[$this->_key][$key]['href'] = $xpath->query('h4/a', $element)->item(0)->getAttribute("href");
+            $dataList[$this->_key][$key]['title'] = $xpath->query('h4/a', $element)->item(0)->textContent;
+            $dataList[$this->_key][$key]['summary'] = $xpath->query('p', $element)->item(0)->textContent;
+            $dataList[$this->_key][$key]['author'] = $xpath->query('div[@class="s-p"]/a', $element)->item(0)->getAttribute("title");
 	    }
 
 	    $this->dataList = isset($this->dataList[$this->_key])? $this->dataList[$this->_key]:$this->dataList;
@@ -137,18 +134,16 @@ class Crawl
 	    }
 
 	    /*获取下一页Url*/
-	    $this->nextPage_url = $xpath->query($this->config['xpath']['next'])
-	    			 		  ->item(0)
-    			 			  ->getAttribute('href');
-
+	    $nextPage_element = $xpath->query($this->config['xpath']['next']);
 	    if(!$this->checkIsEnd()) {
+            $this->nextPage_url = $nextPage_element->item(0)->getAttribute('href');
 			$this->query_param = str_replace($this->config['url'], '', $this->nextPage_url);
 	    	static::$deep++;
 	    	$this->crawl_page($this->currPage_url);
             return true;
 	    }
         error_log("第一个关键词抓取完毕!");
-	    return;
+	    return true;
 	}
 
     /*写数据*/
@@ -164,13 +159,24 @@ class Crawl
         }
         file_put_contents($path, json_encode($content));
     }
+    
+    /*读取当日抓取内容*/
+    public function readData()
+    {
+        $file = 'weixin-' . date('Ymd') . '.json';
+        $json = file_get_contents( '/tmp/' . $file);
+        $data_arr = json_decode($json, true);
+        return $data_arr;
+    }
 
 
 	private function reconnect()
 	{
 		error_log("没有抓取到东西!(被ban or 语句有问题),第" . self::$conn_num . "次尝试重连....");
 		self::$conn_num++;
-		static::$proxy = true;
+        $this->proxyIP = '107.170.238.246:82';
+        $this->proxyIP = '113.102.163.124:82';
+        $this->proxyIP = '106.185.41.18:82';
 		$this->crawl_page();	
 	}
 	public function get_html()
@@ -184,8 +190,8 @@ class Crawl
                 CURLOPT_USERAGENT       => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ru; rv:1.8.0.9) Gecko/20061206 Firefox/1.5.0.9',
         );
 
-        if(1||static::$proxy == true) {
-        	$proxy = array(CURLOPT_PROXY => '107.170.238.246:82');
+        if(!empty($this->proxyIP)) {
+        	$proxy = array(CURLOPT_PROXY => $this->proxyIP);
         	$options = $options + $proxy;
         }
 
@@ -197,7 +203,6 @@ class Crawl
     		return false;
     	}
     	return $content;
-    	//return (!$error && $html) ? $html : null;
 	}
 
 	/*
