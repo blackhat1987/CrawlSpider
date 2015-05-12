@@ -18,4 +18,17 @@ class DefaultController
 		}
 
 	}
+
+	public function actionRead()
+	{
+		$file = 'weixin-' . date('Ymd') . '.json';
+		$json = file_get_contents( '/tmp/' . $file);
+		$data_arr = json_decode($json, true);
+		foreach ($data_arr as $key => $value) {
+			echo "<h1>$key:</h1></br>";
+			foreach ($value as $k => $v) {
+				echo $v['title'] . "</br>";
+			}
+		}
+	}
 }

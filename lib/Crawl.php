@@ -17,7 +17,7 @@
 */
 
 
-class Crawl_Crawl
+class Crawl
 {
 	/*配置文件*/
 	public $config = array();
@@ -109,6 +109,7 @@ class Crawl_Crawl
 	    $elements = $xpath->query($this->config['xpath']['main']);
 	    if($elements->length == 0) {
 	    	//尝试走代理
+	    	error_log("窝走代理了");
 	    	if(self::$conn_num <= self::$max_conn) {
                 self::$conn_num++;
                 static::$proxy = true;
@@ -123,12 +124,14 @@ class Crawl_Crawl
 	    error_log("######[$this->_key]第" . static::$deep . "页########");
 
 	    foreach ($elements as $key => $element) {
-	    	error_log($element->textContent . PHP_EOL);
+	    	#error_log($element->textContent . PHP_EOL);
 	        $dataList[$this->_key][$key]['title'] = $element->textContent;
 	        $dataList[$this->_key][$key]['href'] = $element->getAttribute("href");
 	    }
 
-        $this->dataList = array_merge($this->dataList,$dataList);
+	    $this->dataList = isset($this->dataList[$this->_key])? $this->dataList[$this->_key]:$this->dataList;
+        $this->dataList = array($this->_key => array_merge($this->dataList,$dataList[$this->_key]));
+        
 	    if(isset($this->config['sleep'])) {
 	    	sleep($this->config['sleep']);
 	    }
@@ -157,7 +160,7 @@ class Crawl_Crawl
         if($data_file) {
             $content =  json_decode($data_file, true);
             $content = array_merge($content,$this->dataList);
-            print_r($content);
+            //print_r($content);
         }
         file_put_contents($path, json_encode($content));
     }
@@ -181,7 +184,7 @@ class Crawl_Crawl
                 CURLOPT_USERAGENT       => 'Mozilla/5.0 (Windows; U; Windows NT 5.1; ru; rv:1.8.0.9) Gecko/20061206 Firefox/1.5.0.9',
         );
 
-        if(1||static::$proxy) {
+        if(1||static::$proxy == true) {
         	$proxy = array(CURLOPT_PROXY => '107.170.238.246:82');
         	$options = $options + $proxy;
         }
@@ -193,7 +196,6 @@ class Crawl_Crawl
     		$this->setError(curl_error($ch));
     		return false;
     	}
-
     	return $content;
     	//return (!$error && $html) ? $html : null;
 	}
